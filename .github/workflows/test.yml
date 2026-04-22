@@ -23,24 +23,25 @@ jobs:
 
       - name: probe /
         working-directory: ${{ matrix.template }}
+        shell: bash +e {0}
         run: |
-          set -u
+          : >/tmp/body
           for i in $(seq 1 120); do
-            code=$(curl -sS -o /tmp/body -w '%{http_code}' -m 5 http://127.0.0.1:18080/ 2>/dev/null || echo 000)
-            printf 'attempt %s: status=%s size=%s\n' "$i" "$code" "$(wc -c < /tmp/body)"
+            code=$(curl -sS -o /tmp/body -w '%{http_code}' -m 5 http://127.0.0.1:18080/ 2>/dev/null)
+            [ -z "$code" ] && code=000
+            size=$(wc -c </tmp/body 2>/dev/null || echo 0)
+            printf 'attempt %s: status=%s size=%s\n' "$i" "$code" "$size"
             case "$code" in
-              000|502|504) sleep 3; continue ;;
+              000|502|504) sleep 3 ;;
               *)
                 echo "--- body (first 400 bytes) ---"
                 head -c 400 /tmp/body
                 echo
-                printf -- '--- healthy after %ss ---\n' "$((i*3))"
+                printf -- '--- reachable after %ss ---\n' "$((i*3))"
                 exit 0 ;;
             esac
           done
           echo "UNREACHABLE after 360s"
-          docker compose ps
-          docker compose logs --tail=200
           exit 1
 
       - name: final ps + logs (always)

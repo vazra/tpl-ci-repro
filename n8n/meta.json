@@ -1,0 +1,18 @@
+{
+  "id": "n8n-postgres",
+  "slug": "e2e-tpl-n8n-postgres",
+  "vars": {
+    "domain": "e2e-tpl-n8n-postgres.local",
+    "admin_user": "admin",
+    "admin_password": "Zpwbi4mr3JWmp2QXtuUafMM4",
+    "db_password": "27Af3Lte7dqWNJubTuS42E1xXaPTB91m"
+  },
+  "endpoints": [
+    {
+      "service": "n8n",
+      "domain": "e2e-tpl-n8n-postgres.local",
+      "hostPort": 18080,
+      "containerPort": "5678"
+    }
+  ]
+}

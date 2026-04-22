@@ -1,0 +1,17 @@
+{
+  "id": "umami-postgres",
+  "slug": "e2e-tpl-umami-postgres",
+  "vars": {
+    "domain": "e2e-tpl-umami-postgres.local",
+    "hash_salt": "9c3df35f340ccac09d2f520de83807ef",
+    "db_password": "bztc9WjYRTyu8yUzVQ7JWKj9FH21CJSR"
+  },
+  "endpoints": [
+    {
+      "service": "umami",
+      "domain": "e2e-tpl-umami-postgres.local",
+      "hostPort": 18080,
+      "containerPort": "3000"
+    }
+  ]
+}

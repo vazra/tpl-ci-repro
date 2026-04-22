@@ -1,0 +1,51 @@
+name: test-templates
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [n8n, umami]
+    runs-on: ubuntu-latest
+    name: ${{ matrix.template }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: docker compose up
+        working-directory: ${{ matrix.template }}
+        run: |
+          docker compose up -d
+          docker compose ps
+
+      - name: probe /
+        working-directory: ${{ matrix.template }}
+        run: |
+          set -u
+          for i in $(seq 1 120); do
+            code=$(curl -sS -o /tmp/body -w '%{http_code}' -m 5 http://127.0.0.1:18080/ 2>/dev/null || echo 000)
+            printf 'attempt %s: status=%s size=%s\n' "$i" "$code" "$(wc -c < /tmp/body)"
+            case "$code" in
+              000|502|504) sleep 3; continue ;;
+              *)
+                echo "--- body (first 400 bytes) ---"
+                head -c 400 /tmp/body
+                echo
+                printf -- '--- healthy after %ss ---\n' "$((i*3))"
+                exit 0 ;;
+            esac
+          done
+          echo "UNREACHABLE after 360s"
+          docker compose ps
+          docker compose logs --tail=200
+          exit 1
+
+      - name: final ps + logs (always)
+        if: always()
+        working-directory: ${{ matrix.template }}
+        run: |
+          docker compose ps
+          docker compose logs --tail=200

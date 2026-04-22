@@ -1,0 +1,74 @@
+{
+  "services": {
+    "umami": {
+      "image": "ghcr.io/umami-software/umami:postgresql-v2.20.2",
+      "restart": "unless-stopped",
+      "environment": {
+        "DATABASE_URL": "postgresql://umami:bztc9WjYRTyu8yUzVQ7JWKj9FH21CJSR@db:5432/umami",
+        "DATABASE_TYPE": "postgresql",
+        "APP_SECRET": "9c3df35f340ccac09d2f520de83807ef"
+      },
+      "depends_on": {
+        "db": {
+          "condition": "service_healthy"
+        }
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "cpus": "0.5",
+            "memory": "256M"
+          }
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "wget",
+          "-qO-",
+          "http://localhost:3000/api/heartbeat"
+        ],
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "start_period": "60s"
+      },
+      "ports": [
+        "18080:3000"
+      ]
+    },
+    "db": {
+      "image": "postgres:16-alpine",
+      "restart": "unless-stopped",
+      "environment": {
+        "POSTGRES_USER": "umami",
+        "POSTGRES_PASSWORD": "bztc9WjYRTyu8yUzVQ7JWKj9FH21CJSR",
+        "POSTGRES_DB": "umami"
+      },
+      "volumes": [
+        "pgdata:/var/lib/postgresql/data"
+      ],
+      "deploy": {
+        "resources": {
+          "limits": {
+            "cpus": "0.5",
+            "memory": "512M"
+          }
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U \"$${POSTGRES_USER:-postgres}\""
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 5,
+        "start_period": "30s"
+      }
+    }
+  },
+  "volumes": {
+    "pgdata": {}
+  }
+}

@@ -9,20 +9,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        template: [n8n, umami]
+        template:
+          - { dir: n8n,            inject: false }
+          - { dir: umami,          inject: false }
+          - { dir: n8n-injected,   inject: true  }
+          - { dir: umami-injected, inject: true  }
     runs-on: ubuntu-latest
-    name: ${{ matrix.template }}
+    name: ${{ matrix.template.dir }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: ensure external network (injected variants only)
+        if: ${{ matrix.template.inject }}
+        run: docker network create simpledeploy-public
+
       - name: docker compose up
-        working-directory: ${{ matrix.template }}
+        working-directory: ${{ matrix.template.dir }}
         run: |
           docker compose up -d
           docker compose ps
 
       - name: probe /
-        working-directory: ${{ matrix.template }}
+        working-directory: ${{ matrix.template.dir }}
         shell: bash +e {0}
         run: |
           : >/tmp/body
@@ -46,7 +54,7 @@ jobs:
 
       - name: final ps + logs (always)
         if: always()
-        working-directory: ${{ matrix.template }}
+        working-directory: ${{ matrix.template.dir }}
         run: |
           docker compose ps
           docker compose logs --tail=200
